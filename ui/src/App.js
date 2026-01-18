@@ -7,6 +7,7 @@ import MoviesList from "./MoviesList";
 function App() {
     const [movies, setMovies] = useState([]);
     const [addingMovie, setAddingMovie] = useState(false);
+    const [deletingMovie, setDeletingMovie] = useState(false);
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -31,13 +32,24 @@ function App() {
         }
     }
 
+    async function handleDeleteMovie(movie) {
+        const url = `/movies/${movie.id}`;
+        const response = await fetch(url, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            setMovies(movies.filter(m => m !== movie))
+        }
+    }
+
     return (
         <div className="container">
             <h1>My favourite movies to watch</h1>
             {movies.length === 0
                 ? <p>No movies yet. Maybe add something?</p>
                 : <MoviesList movies={movies}
-                              onDeleteMovie={(movie) => setMovies(movies.filter(m => m !== movie))}
+                              onDeleteMovie={handleDeleteMovie}
+                              buttonLabel="Delete movie"
                 />}
             {addingMovie
                 ? <MovieForm onMovieSubmit={handleAddMovie}
