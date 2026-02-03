@@ -6,9 +6,13 @@ from typing import Any
 import sqlite3
 
 
+class Actor(BaseModel):
+    name: str
+
 class Movie(BaseModel):
     title: str
     year: str
+    actors: list[Actor] = []
 
 app = FastAPI()
 
@@ -19,54 +23,70 @@ def serve_react_app():
    return FileResponse("../ui/build/index.html")
 
 @app.get('/movies')
-def get_movies():  # put application's code here
+def get_movies():
     db = sqlite3.connect('movies.db')
     cursor = db.cursor()
-    movies = cursor.execute('SELECT * FROM movies')
+    movies_rows = cursor.execute('SELECT ID, title, year FROM movies').fetchall()
 
     output = []
-    for movie in movies:
-         movie = {'id': movie[0], 'title': movie[1], 'year': movie[2], 'actors': movie[3]}
-         output.append(movie)
+    for movie_row in movies_rows:
+        movie_id = movie_row[0]
+        actors_rows = cursor.execute('SELECT name FROM actors WHERE movie_id=?', (movie_id,)).fetchall()
+        actors = [{'name': a[0]} for a in actors_rows]
+        movie = {'id': movie_id, 'title': movie_row[1], 'year': movie_row[2], 'actors': actors}
+        output.append(movie)
     return output
 
 @app.get('/movies/{movie_id}')
-def get_single_movie(movie_id:int):  # put application's code here
+def get_single_movie(movie_id: int):
     db = sqlite3.connect('movies.db')
     cursor = db.cursor()
-    movie = cursor.execute(f"SELECT * FROM movies WHERE id={movie_id}").fetchone()
-    if movie is None:
+    movie = cursor.execute("SELECT ID, title, year FROM movies WHERE id=?", (movie_id,)).fetchone()
+    if movie is not None:
+        actors_rows = cursor.execute('SELECT name FROM actors WHERE movie_id=?', (movie_id,)).fetchall()
+        actors = [{'name': a[0]} for a in actors_rows]
+        return {'id': movie[0], 'title': movie[1], 'year': movie[2], 'actors': actors}
+    else:
         return {'message': "Movie not found"}
-    return {'title': movie[1], 'year': movie[2], 'actors': movie[3]}
+
 
 @app.post("/movies")
 def add_movie(movie: Movie):
     db = sqlite3.connect('movies.db')
     cursor = db.cursor()
-    cursor.execute(f"INSERT INTO movies (title, year) VALUES ('{movie.title}', '{movie.year}')")
+    cursor.execute("INSERT INTO movies (title, year) VALUES (?, ?)", (movie.title, movie.year))
+    movie_id = cursor.lastrowid
+
+    for actor in movie.actors:
+        cursor.execute("INSERT INTO actors (name, movie_id) VALUES (?, ?)", (actor.name, movie_id))
+
     db.commit()
-    return {"message": f"Movie with id = {cursor.lastrowid} added successfully",
-            "id": cursor.lastrowid}
-    # movie = models.Movie.create(**movie.dict())
-    # return movie
+    return {"message": "Movie and actors added successfully", "id": movie_id}
 
 @app.put("/movies/{movie_id}")
-def update_movie(movie_id:int, params: dict[str, Any]):
+def update_movie(movie_id: int, movie: Movie):
     db = sqlite3.connect('movies.db')
     cursor = db.cursor()
     cursor.execute(
-    "UPDATE movies SET title = ?, year = ?, actors = ? WHERE id = ?",
-    (params['title'], params['year'], params['actors'], movie_id)
+        "UPDATE movies SET title = ?, year = ? WHERE id = ?",
+        (movie.title, movie.year, movie_id)
     )
+
+    cursor.execute("DELETE FROM actors WHERE movie_id = ?", (movie_id,))
+    for actor in movie.actors:
+        cursor.execute("INSERT INTO actors (name, movie_id) VALUES (?, ?)", (actor.name, movie_id))
+
     db.commit()
     if cursor.rowcount == 0:
-        return {"message": f"Movie with id = {movie_id} not found"}
-    return {"message": f"Movie with id = {cursor.lastrowid} updated successfully"}
+        pass
+
+    return {"message": f"Movie with id = {movie_id} updated successfully"}
 
 @app.delete("/movies/{movie_id}")
-def delete_movie(movie_id:int):
+def delete_movie(movie_id: int):
     db = sqlite3.connect('movies.db')
     cursor = db.cursor()
+    cursor.execute("DELETE FROM actors WHERE movie_id = ?", (movie_id,))
     cursor.execute("DELETE FROM movies WHERE id = ?", (movie_id,))
     db.commit()
     if cursor.rowcount == 0:
@@ -74,12 +94,13 @@ def delete_movie(movie_id:int):
     return {"message": f"Movie with id = {movie_id} deleted successfully"}
 
 @app.delete("/movies")
-def delete_movies(movie_id:int):
+def delete_movies():
     db = sqlite3.connect('movies.db')
     cursor = db.cursor()
+    cursor.execute("DELETE FROM actors")
     cursor.execute("DELETE FROM movies")
     db.commit()
-    return {"message": f"Deleted {cursor.rowcount} movies"}
+    return {"message": f"Deleted all movies"}
 
 
 # if __name__ == '__main__':
