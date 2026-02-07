@@ -1,63 +1,72 @@
 import './App.css';
-import {useEffect, useState} from "react";
 import "milligram";
+import {useEffect, useState} from "react";
 import MovieForm from "./MovieForm";
-import MoviesList from "./MoviesList";
+import MovieListForm from "./MovieListForm";
+import BrowserTitle from "./BrowserTitle";
 
 function App() {
     const [movies, setMovies] = useState([]);
-    const [addingMovie, setAddingMovie] = useState(false);
-    const [deletingMovie, setDeletingMovie] = useState(false);
+    const API_URL = "http://127.0.0.1:8000/movies";
 
     useEffect(() => {
-        const fetchMovies = async () => {
-            const response = await fetch(`/movies`);
-            if (response.ok) {
-                const movies = await response.json();
-                setMovies(movies);
-            }
-        };
-        fetchMovies();
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(movies => setMovies(movies))
+            .catch(err => console.log('Error fetching movies:', err));
     }, []);
 
-    async function handleAddMovie(movie) {
-        const response = await fetch('/movies', {
-            method: 'POST',
-            body: JSON.stringify(movie),
-            headers: {'Content-Type': 'application/json'}
-        });
-        if (response.ok) {
-            const addingResponse = await response.json();
-            movie.id = addingResponse.id
-            setMovies([...movies, movie]);
-            setAddingMovie(false);
-        }
-    }
 
-    async function handleDeleteMovie(movie) {
-        const url = `/movies/${movie.id}`;
-        const response = await fetch(url, {
-            method: 'DELETE'
-        });
-        if (response.ok) {
-            setMovies(movies.filter(m => m !== movie))
+    const handleAddMovie = async (movie) => {
+        const formattedMovie = {
+            ...movie,
+            actors: movie.actors.map(actorName => ({ fullname: actorName }))
+        };
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formattedMovie)
+            });
+
+            if (response.ok) {
+                fetch(API_URL)
+                    .then(res => res.json())
+                    .then(data => setMovies(data));
+            }
+        } catch (error) {
+            console.error('Error adding movie:', error);
         }
-    }
+    };
+
+    const handleDeleteMovie = async (movieId) => {
+        try {
+            const response = await fetch(`${API_URL}/${movieId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                setMovies(movies.filter(movie => movie.id !== movieId));
+            }
+        } catch (error) {
+            console.error('Error deleting movie:', error);
+        }
+    };
 
     return (
         <div className="container">
+            <BrowserTitle title="Movies DB" />
             <h1>My favourite movies to watch</h1>
-            {movies.length === 0
-                ? <p>No movies yet. Maybe add something?</p>
-                : <MoviesList movies={movies}
-                              onDeleteMovie={handleDeleteMovie}
-                              buttonLabel="Delete movie"
-                />}
-            {addingMovie
-                ? <MovieForm onMovieSubmit={handleAddMovie}
-                             buttonLabel="Add a movie"
-                />
-                : <button onClick={() => setAddingMovie(true)}>Add a movie</button>}
+
+            <MovieListForm movies={movies} onDeleteMovie={handleDeleteMovie}/>
+            <MovieForm onMovieSubmit={handleAddMovie}/>
         </div>
     );
 }

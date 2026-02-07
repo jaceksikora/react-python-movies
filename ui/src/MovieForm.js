@@ -3,19 +3,20 @@ import {useState} from "react";
 export default function MovieForm(props) {
     const [title, setTitle] = useState('');
     const [year, setYear] = useState('');
-    const [director, setDirector] = useState('');
     const [description, setDescription] = useState('');
+    const [actors, setActors] = useState([]);
 
     function addMovie(event) {
         event.preventDefault();
         if (title.length < 5) {
             return alert('Tytuł jest za krótki');
         }
-        props.onMovieSubmit({title, year, director, description});
+        const actorsArray = typeof actors === 'string' ? actors.split(',').map(s => s.trim()) : actors;
+        props.onMovieSubmit({title, year, description, actors: actorsArray});
         setTitle('');
         setYear('');
-        setDirector('');
         setDescription('');
+        setActors([]);
     }
 
     return <form onSubmit={addMovie}>
@@ -25,17 +26,17 @@ export default function MovieForm(props) {
             <input type="text" value={title} onChange={(event) => setTitle(event.target.value)}/>
         </div>
         <div>
-            <label>Year</label>
+            <label>Rok nagrania</label>
             <input type="text" value={year} onChange={(event) => setYear(event.target.value)}/>
         </div>
         <div>
-            <label>Director</label>
-            <input type="text" value={director} onChange={(event) => setDirector(event.target.value)}/>
+            <label>Opis</label>
+            <input type="text" value={description} onChange={(event) => setDescription(event.target.value)}/>
         </div>
         <div>
-            <label>Description</label>
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)}/>
+            <label>Aktorzy</label>
+            <input type="text" value={actors} onChange={(event) => setActors(event.target.value)}/>
         </div>
-        <button>{props.buttonLabel || 'Submit'}</button>
+        <button>Add a movie</button>
     </form>;
 }
