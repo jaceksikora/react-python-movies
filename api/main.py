@@ -1,21 +1,22 @@
-from fastapi import FastAPI, Body
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-from typing import Any
 import sqlite3
 
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 
 
 class Actor(BaseModel):
     fullname: str
 
+
 class Movie(BaseModel):
     title: str
     year: int
     description: str
     actors: list[Actor] = []
+
 
 app = FastAPI()
 
@@ -34,9 +35,11 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="../ui/build/static", check_dir=False), name="static")
 
+
 @app.get("/")
 def serve_react_app():
-   return FileResponse("../ui/build/index.html")
+    return FileResponse("../ui/build/index.html")
+
 
 @app.get('/movies')
 def get_movies():
@@ -48,10 +51,11 @@ def get_movies():
     for movie_row in movies_rows:
         movie_id = movie_row[0]
         actors_rows = cursor.execute('''
-        SELECT a.fullname FROM actors a 
-        JOIN actor_movie am ON a.id = am.actor_id 
-            WHERE am.movie_id = ?
-        ''', (movie_id,)).fetchall()
+                                     SELECT a.fullname
+                                     FROM actors a
+                                              JOIN actor_movie am ON a.id = am.actor_id
+                                     WHERE am.movie_id = ?
+                                     ''', (movie_id,)).fetchall()
 
         actors = [{'fullname': a[0]} for a in actors_rows]
         movie = {
@@ -63,6 +67,7 @@ def get_movies():
         }
         output.append(movie)
     return output
+
 
 @app.get('/movies/{movie_id}')
 def get_single_movie(movie_id: int):
@@ -141,6 +146,7 @@ def update_movie(movie_id: int, movie: Movie):
     db.commit()
     return {"message": f"Movie with id = {movie_id} updated successfully"}
 
+
 @app.delete("/movies/{movie_id}")
 def delete_movie(movie_id: int):
     db = sqlite3.connect('movies.db')
@@ -149,6 +155,7 @@ def delete_movie(movie_id: int):
     cursor.execute("DELETE FROM movies WHERE id = ?", (movie_id,))
     db.commit()
     return {"message": f"Movie with id = {movie_id} deleted successfully"}
+
 
 @app.delete("/movies")
 def delete_movies():
@@ -159,6 +166,24 @@ def delete_movies():
     db.commit()
     return {"message": f"Deleted all movies"}
 
+
+@app.get("/actors")
+def get_actors():
+    db = sqlite3.connect('movies.db')
+    cursor = db.cursor()
+    actor_rows = cursor.execute("SELECT * FROM actors").fetchall()
+
+    actors_list = []
+    for row in actor_rows:
+        actors_list.append({
+            "id": row[0],
+            "fullname": row[1]
+        })
+
+    db.close()  # Dobrą praktyką jest zamykanie połączenia
+    return {
+        'actors': actors_list
+    }
 
 # if __name__ == '__main__':
 #     app.run()
