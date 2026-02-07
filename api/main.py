@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from typing import Any
 import sqlite3
 
+from starlette.middleware.cors import CORSMiddleware
+
 
 class Actor(BaseModel):
     fullname: str
@@ -16,6 +18,19 @@ class Movie(BaseModel):
     actors: list[Actor] = []
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount("/static", StaticFiles(directory="../ui/build/static", check_dir=False), name="static")
 
