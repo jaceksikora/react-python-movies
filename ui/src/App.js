@@ -3,19 +3,28 @@ import "milligram";
 import {useEffect, useState} from "react";
 import MovieForm from "./MovieForm";
 import MovieListForm from "./MovieListForm";
+import ActorList from "./ActorList";
 import BrowserTitle from "./BrowserTitle";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
     const [movies, setMovies] = useState([]);
-    const API_URL = "http://127.0.0.1:8000/movies";
+    const [actors, setActors] = useState([]);
+    const API_URL = "http://127.0.0.1:8000";
 
     useEffect(() => {
-        fetch(API_URL)
+        fetch(API_URL + "/movies")
             .then(res => res.json())
             .then(movies => setMovies(movies))
             .catch(err => console.log('Error fetching movies:', err));
+    }, []);
+
+    useEffect(() => {
+        fetch(API_URL + "/actors")
+            .then(res => res.json())
+            .then(data => setActors(data.actors))
+            .catch(err => console.error("Error fetching actors:", err));
     }, []);
 
 
@@ -77,6 +86,8 @@ function App() {
 
             <MovieListForm movies={movies} onDeleteMovie={handleDeleteMovie}/>
             <MovieForm onMovieSubmit={handleAddMovie}/>
+
+            <ActorList />
             <ToastContainer position="bottom-right" autoClose={3000} />
         </div>
     );
