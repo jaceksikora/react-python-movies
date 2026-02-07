@@ -7,7 +7,7 @@ export default function MovieListForm(props) {
                 <li key={`${movie.id || movie.title}-${index}`}>
                     <strong>{movie.title}</strong> ({movie.year}) - {movie.description}
                     {movie.actors && (
-                        <span> – Aktorzy: {Array.isArray(movie.actors)
+                        <span> – Actors: {Array.isArray(movie.actors)
                             ? movie.actors.map(actor => actor.fullname).join(", ")
                             : movie.actors}
             </span>
