@@ -4,7 +4,8 @@ import {useEffect, useState} from "react";
 import MovieForm from "./MovieForm";
 import MovieListForm from "./MovieListForm";
 import BrowserTitle from "./BrowserTitle";
-import {toast} from "react-toastify";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
     const [movies, setMovies] = useState([]);
@@ -76,6 +77,7 @@ function App() {
 
             <MovieListForm movies={movies} onDeleteMovie={handleDeleteMovie}/>
             <MovieForm onMovieSubmit={handleAddMovie}/>
+            <ToastContainer position="bottom-right" autoClose={3000} />
         </div>
     );
 }
