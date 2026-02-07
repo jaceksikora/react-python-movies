@@ -4,6 +4,7 @@ import {useEffect, useState} from "react";
 import MovieForm from "./MovieForm";
 import MovieListForm from "./MovieListForm";
 import BrowserTitle from "./BrowserTitle";
+import {toast} from "react-toastify";
 
 function App() {
     const [movies, setMovies] = useState([]);
@@ -44,6 +45,10 @@ function App() {
     };
 
     const handleDeleteMovie = async (movieId) => {
+        if (!window.confirm("Do you really want to delete the movie?")) {
+            return;
+        }
+
         try {
             const response = await fetch(`${API_URL}/${movieId}`, {
                 method: 'DELETE',
@@ -52,8 +57,12 @@ function App() {
                 }
             });
 
+
             if (response.ok) {
                 setMovies(movies.filter(movie => movie.id !== movieId));
+                toast.success("Film deleted!");
+            } else {
+                toast.error("There was an error when deleting the movie.");
             }
         } catch (error) {
             console.error('Error deleting movie:', error);
