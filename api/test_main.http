@@ -2,10 +2,13 @@ POST http://127.0.0.1:8000/movies
 Content-Type: application/json
 
 {
-  "title": "title1",
-  "year": 1923,
-  "director": "director1",
-  "description": ""
+  "title": "Inception",
+  "year": 2010,
+  "description": "A thief who steals corporate secrets through the use of dream-sharing technology.",
+  "actors": [
+    {"fullname": "Leonardo DiCaprio"},
+    {"fullname": "Joseph Gordon-Levitt"}
+  ]
 }
 
 ###
@@ -15,10 +18,30 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/movies/7
+GET http://127.0.0.1:8000/movies/1
 Accept: application/json
 
 ###
 
-DELETE http://127.0.0.1:8000/movies/5
+PUT http://127.0.0.1:8000/movies/1
+Content-Type: application/json
+
+{
+  "title": "Inception Updated",
+  "year": 2010,
+  "description": "Updated description.",
+  "actors": [
+    {"fullname": "Leonardo DiCaprio"},
+    {"fullname": "Elliot Page"}
+  ]
+}
+
+###
+
+DELETE http://127.0.0.1:8000/movies/1
+Accept: application/json
+
+###
+
+DELETE http://127.0.0.1:8000/movies
 Accept: application/json
