@@ -180,10 +180,7 @@ def get_actors():
             "fullname": row[1]
         })
 
-    db.close()  # Dobrą praktyką jest zamykanie połączenia
+    db.close()
     return {
         'actors': actors_list
     }
-
-# if __name__ == '__main__':
-#     app.run()
